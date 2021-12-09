@@ -17,26 +17,54 @@ Gameplay::Gameplay(wxFrame *parent) :
     destroyed = 0;
     points = 0;
 
+    isStarted = false;
+    isPaused = false;
+
     Connect(wxEVT_PAINT, wxPaintEventHandler(Gameplay::OnPaint));
     Connect(wxEVT_KEY_DOWN, wxKeyEventHandler(Gameplay::OnKeyDown));
     Connect(wxEVT_TIMER, wxCommandEventHandler(Gameplay::OnTimer));
 }
 
 void Gameplay::Start() {
+    if (isPaused) {
+        return;
+    }
+    isStarted = true;
     destroyed = 0;
     points = 0;
     wave = 1;
     nextUpgrade = 5;
     enemy.SetSpeed(0.1);
-    player.SetHealth(100);
+
     timer->Start(5);
+}
+
+void Gameplay::Pause() {
+    if (!isStarted) {
+        return;
+    }
+    isPaused = !isPaused;
+    if (isPaused) {
+        timer->Stop();
+        m_stsbar->SetStatusText("Paused");
+    } else {
+        timer->Start(5);
+        UpdateStatusbar(0, 0);
+    }
+    Refresh();
 }
 
 
 void Gameplay::OnKeyDown(wxKeyEvent &event) {
     int keycode = event.GetKeyCode();
+
     if (keycode == 'p' || keycode == 'P') {
-        std::cout << player.GetBullets().size() << std::endl;
+        Pause();
+        return;
+    }
+
+    if (isPaused) {
+        return;
     }
 }
 
@@ -56,7 +84,7 @@ void Gameplay::RemoveEnemy(wxSize size) {
                 UpdateStatusbar(1, 0);
             }
 
-            // keeps track of which powerup
+            // keeps track of which power up
             Upgrades upgrades1;
             if (destroyed == nextUpgrade) {
                 int randomPowerup = rand() % 2;
@@ -96,6 +124,7 @@ void Gameplay::RemoveEnemy(wxSize size) {
                 powerups.emplace_back(upgrades1, newPosX, newPosY);
                 nextUpgrade += 1;
 
+                // increase enemy speed per wave
                 if (nextUpgrade % 4 == 0) {
                     wave++;
                     if (enemy.GetSpeed() < 3) {
@@ -145,6 +174,8 @@ void Gameplay::OnTimer(wxCommandEvent &event) {
 
     // checks collision in game
     CheckCollision(player.GetBullets(), enemies, powerups);
+
+    CheckGameOver();
 
     wxWindow::Refresh();
 }
@@ -275,5 +306,10 @@ void Gameplay::UpdateStatusbar(int addPoints, int addHealth) {
     m_stsbar->SetStatusText(str);
 }
 
-
-
+void Gameplay::CheckGameOver() {
+    if (player.GetHealth() <= 0) {
+        timer->Stop();
+        isStarted = false;
+        m_stsbar->SetStatusText("Game Over");
+    }
+}

@@ -23,6 +23,9 @@ private:
     int points;
     int destroyed, wave;
     int nextUpgrade;
+    bool isStarted;
+    bool isPaused;
+
     wxStatusBar *m_stsbar;
 
     void UpdateStatusbar(int addPoints, int addHealth);
@@ -40,6 +43,7 @@ public:
 
     void CheckCollision(std::vector<Bullet> &bullets, std::vector<Enemy> &enemy, std::vector<Powerup> &powerups);
 
+    void CheckGameOver();
 protected:
     void OnPaint(wxPaintEvent &event);
 
