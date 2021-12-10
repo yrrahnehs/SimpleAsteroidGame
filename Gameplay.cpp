@@ -110,10 +110,10 @@ void Gameplay::RemoveEnemy(wxSize size) {
                 }
 
                 if (enemies[i].GetX() <= 14) {
-                    newPosX = 20;
+                    newPosX = 25;
                 }
                 if (enemies[i].GetX() >= size.GetWidth()) {
-                    newPosX = size.GetWidth() - 20;
+                    newPosX = size.GetWidth() - 25;
                 }
                 if (enemies[i].GetY() <= 14) {
                     newPosY = 20;
