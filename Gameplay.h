@@ -40,6 +40,8 @@ public:
 
     void Pause();
 
+    void SetPoints(int newPoints);
+
     void RemoveEnemy(wxSize size, std::vector<Enemy> &nmes);
 
     int GetDestroyed();

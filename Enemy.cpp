@@ -134,7 +134,7 @@ void Enemy::DrawEnemy(wxPaintDC &dc) {
 }
 
 int Enemy::EnemySpawn(wxSize size, int offset) {
-    return (rand() % (size.GetWidth() - (offset-1)) + offset);
+    return (rand() % (size.GetWidth() - (offset*2)) + offset);
 }
 
 bool Enemy::operator==(const Enemy &e) const {

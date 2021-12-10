@@ -35,7 +35,7 @@ void Gameplay::Start() {
     points = 0;
     wave = 1;
     nextUpgrade = 5;
-    enemy.SetSpeed(0.8);
+    enemy.SetSpeed(0.3);
 
     timer->Start(5);
 }
@@ -151,7 +151,6 @@ void Gameplay::RemoveEnemy(wxSize size, std::vector<Enemy> &nmes) {
 
         // if enemy moves out of bounds
         if (nmes[i].GetY() - nmes[i].GetRadius() >= size.GetHeight()) {
-            points--;
             nmes[i].SetStatus(false);
             nmes.erase(std::remove(nmes.begin(), nmes.end(), nmes[i]));
         }
@@ -172,16 +171,17 @@ void Gameplay::OnTimer(wxCommandEvent &event) {
     // spawn x-moving enemy every 30 enemy deaths
     if (timeToSpawn) {
         for (int i = 0; i < (totalDestroyed/30); i++) {
-            specialEnemies.emplace_back(13, enemy.EnemySpawn(size, 13), -26, enemy.GetSpeed(), 1);
+            specialEnemies.emplace_back(13, enemy.EnemySpawn(size, 13), -26, enemy.GetSpeed()*5/6, 1);
         }
         timeToSpawn = false;
     }
 
-    // enemy movement
+    // normal enemy movement
     for (auto &enemie: enemies) {
         enemie.EnemyMovement(size);
     }
 
+    // special enemy movement
     for (auto &spEnemie: specialEnemies) {
         spEnemie.EnemyMovement(size);
     }
@@ -329,9 +329,13 @@ void Gameplay::CheckCollision(std::vector<Bullet> &bullets, std::vector<Enemy> &
 
 }
 
+void Gameplay::SetPoints(int newPoints) {
+    points = newPoints;
+}
+
 void Gameplay::UpdateStatusbar(int addPoints, int addHealth) {
     int newPoint = points + addPoints;
-    points = newPoint;
+    SetPoints(newPoint);
     int newHealth = player.GetHealth() + addHealth;
     player.SetHealth(newHealth);
     wxString str;
