@@ -19,12 +19,15 @@ private:
 
     std::vector<Enemy> enemies;
 
+    std::vector<Enemy> specialEnemies;
+
     std::vector<Powerup> powerups;
     int points;
-    int destroyed, wave;
+    int destroyed, wave, totalDestroyed;
     int nextUpgrade;
     bool isStarted;
     bool isPaused;
+    bool timeToSpawn;
 
     wxStatusBar *m_stsbar;
 
@@ -37,13 +40,16 @@ public:
 
     void Pause();
 
-    void RemoveEnemy(wxSize size);
+    void RemoveEnemy(wxSize size, std::vector<Enemy> &nmes);
 
     int GetDestroyed();
 
-    void CheckCollision(std::vector<Bullet> &bullets, std::vector<Enemy> &enemy, std::vector<Powerup> &powerups);
+    void ChooseUpgrade(float newPosX, float newPosY, std::vector<Powerup> &powerups);
+
+    void CheckCollision(std::vector<Bullet> &bullets, std::vector<Enemy> &nmes, std::vector<Powerup> &powerups);
 
     void CheckGameOver();
+
 protected:
     void OnPaint(wxPaintEvent &event);
 

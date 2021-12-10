@@ -13,7 +13,6 @@ Gameplay::Gameplay(wxFrame *parent) :
     m_stsbar = parent->GetStatusBar();
 
     player = Player(10, 15, 0.7, size.GetWidth() / 2 - 5, size.GetHeight() * 5 / 6);
-    enemy = Enemy();
     destroyed = 0;
     points = 0;
 
@@ -29,12 +28,14 @@ void Gameplay::Start() {
     if (isPaused) {
         return;
     }
+    timeToSpawn = false;
     isStarted = true;
     destroyed = 0;
+    totalDestroyed = 0;
     points = 0;
     wave = 1;
     nextUpgrade = 5;
-    enemy.SetSpeed(0.1);
+    enemy.SetSpeed(0.8);
 
     timer->Start(5);
 }
@@ -68,61 +69,72 @@ void Gameplay::OnKeyDown(wxKeyEvent &event) {
     }
 }
 
+void Gameplay::ChooseUpgrade(float newPosX, float newPosY, std::vector<Powerup> &powerups) {
+    Upgrades upgrades1;
+    int randomPowerup = rand() % 2;
+    if (randomPowerup == 0) {
+        if (player.GetSpeed() == 2.4) {
+            upgrades1 = IncreaseFire;
+        } else {
+            upgrades1 = IncreaseSpeed;
+        }
+    }
+    if (randomPowerup == 1) {
+        if (player.GetRateOfFire() == 10) {
+            upgrades1 = IncreaseSpeed;
+        } else {
+            upgrades1 = IncreaseFire;
+        }
+    }
+
+    if (destroyed % 10 == 0) {
+        upgrades1 = IncreaseHealth;
+    }
+    if (nextUpgrade % 14 == 0) {
+        upgrades1 = IncreaseGun;
+    }
+    powerups.emplace_back(upgrades1, newPosX, newPosY);
+}
+
 // Removes enemy from array
-void Gameplay::RemoveEnemy(wxSize size) {
-    for (int i = 0; i < enemies.size(); i++) {
+void Gameplay::RemoveEnemy(wxSize size, std::vector<Enemy> &nmes) {
+    for (int i = 0; i < nmes.size(); i++) {
         // if enemy is considered dead, remove from list, add to points
-        if (!enemies[i].GetStatus()) {
-            float newPosX = enemies[i].GetX();
-            float newPosY = enemies[i].GetY();
+        if (!nmes[i].GetStatus()) {
+            float newPosX = nmes[i].GetX();
+            float newPosY = nmes[i].GetY();
             // if the enemy was shot, increase destroyed and point, and erase enemy from array
-            if (enemies[i].GetShot()) {
-                newPosX = enemies[i].GetX();
-                newPosY = enemies[i].GetY();
-                enemies.erase(std::remove(enemies.begin(), enemies.end(), enemies[i]));
+            if (nmes[i].GetShot()) {
+                newPosX = nmes[i].GetX();
+                newPosY = nmes[i].GetY();
+                totalDestroyed++;
+
+                // spawns x-moving enemy
+                if (totalDestroyed % 30 == 0) {
+                    timeToSpawn = true;
+                }
                 destroyed++;
+                nmes.erase(std::remove(nmes.begin(), nmes.end(), nmes[i]));
+
                 UpdateStatusbar(1, 0);
             }
 
-            // keeps track of which power up
-            Upgrades upgrades1;
-            if (destroyed == nextUpgrade) {
-                int randomPowerup = rand() % 2;
-                if (randomPowerup == 0) {
-                    if (player.GetSpeed() == 2.4) {
-                        upgrades1 = IncreaseFire;
-                    } else {
-                        upgrades1 = IncreaseSpeed;
-                    }
-                }
-                if (randomPowerup == 1) {
-                    if (player.GetRateOfFire() == 10) {
-                        upgrades1 = IncreaseSpeed;
-                    } else {
-                        upgrades1 = IncreaseFire;
-                    }
-                }
-                if (destroyed % 10 == 0) {
-                    upgrades1 = IncreaseHealth;
-                }
-                if (destroyed % 16 == 0) {
-                    upgrades1 = IncreaseGun;
-                }
+            // positions for when powerups spawn
+            if (nmes[i].GetX() <= 14) {
+                newPosX = 25;
+            }
+            if (nmes[i].GetX() >= size.GetWidth()) {
+                newPosX = size.GetWidth() - 25;
+            }
+            if (nmes[i].GetY() <= 14) {
+                newPosY = 20;
+            }
+            if (nmes[i].GetY() >= size.GetHeight()) {
+                newPosY = size.GetHeight() - 20;
+            }
 
-                if (enemies[i].GetX() <= 14) {
-                    newPosX = 25;
-                }
-                if (enemies[i].GetX() >= size.GetWidth()) {
-                    newPosX = size.GetWidth() - 25;
-                }
-                if (enemies[i].GetY() <= 14) {
-                    newPosY = 20;
-                }
-                if (enemies[i].GetY() >= size.GetHeight()) {
-                    newPosY = size.GetHeight() - 20;
-                }
-                powerups.emplace_back(upgrades1, newPosX, newPosY);
-                nextUpgrade += 1;
+            if (destroyed == nextUpgrade) {
+                ChooseUpgrade(newPosX, newPosY, powerups);
 
                 // increase enemy speed per wave
                 if (nextUpgrade % 4 == 0) {
@@ -131,18 +143,21 @@ void Gameplay::RemoveEnemy(wxSize size) {
                         enemy.SetSpeed(enemy.GetSpeed() + 0.1);
                     }
                 }
+
+                nextUpgrade += 1;
                 destroyed = 0;
             }
         }
 
         // if enemy moves out of bounds
-        if (enemies[i].GetY() - enemies[i].GetRadius() >= size.GetHeight()) {
+        if (nmes[i].GetY() - nmes[i].GetRadius() >= size.GetHeight()) {
             points--;
-            enemies[i].SetStatus(false);
-            enemies.erase(std::remove(enemies.begin(), enemies.end(), enemies[i]));
+            nmes[i].SetStatus(false);
+            nmes.erase(std::remove(nmes.begin(), nmes.end(), nmes[i]));
         }
     }
 }
+
 
 // OnTick
 void Gameplay::OnTimer(wxCommandEvent &event) {
@@ -151,17 +166,30 @@ void Gameplay::OnTimer(wxCommandEvent &event) {
     if (enemies.size() != wave) {
         for (int i = 0; i < wave - enemies.size(); i++) {
             int newRadius = rand() % 15 + 5;
-            enemies.emplace_back(newRadius, enemy.EnemySpawn(size, newRadius), -newRadius, enemy.GetSpeed());
+            enemies.emplace_back(newRadius, enemy.EnemySpawn(size, newRadius), -newRadius * 2, enemy.GetSpeed(), 0);
         }
+    }
+    // spawn x-moving enemy every 30 enemy deaths
+    if (timeToSpawn) {
+        for (int i = 0; i < (totalDestroyed/30); i++) {
+            specialEnemies.emplace_back(13, enemy.EnemySpawn(size, 13), -26, enemy.GetSpeed(), 1);
+        }
+        timeToSpawn = false;
     }
 
     // enemy movement
     for (auto &enemie: enemies) {
-        enemie.EnemyMovement();
+        enemie.EnemyMovement(size);
     }
 
+    for (auto &spEnemie: specialEnemies) {
+        spEnemie.EnemyMovement(size);
+    }
+
+
     // enemy removal
-    RemoveEnemy(size);
+    RemoveEnemy(size, enemies);
+    RemoveEnemy(size, specialEnemies);
 
     // player movement and shots
     player.PlayerMovement(size);
@@ -174,6 +202,7 @@ void Gameplay::OnTimer(wxCommandEvent &event) {
 
     // checks collision in game
     CheckCollision(player.GetBullets(), enemies, powerups);
+    CheckCollision(player.GetBullets(), specialEnemies, powerups);
 
     CheckGameOver();
 
@@ -188,6 +217,10 @@ void Gameplay::OnPaint(wxPaintEvent &event) {
         enemie.DrawEnemy(dc);
     }
 
+    for (auto &spEnemie: specialEnemies) {
+        spEnemie.DrawEnemy(dc);
+    }
+
     // paints powerups
     for (auto &powerup: powerups) {
         powerup.DrawPowerup(dc);
@@ -200,37 +233,37 @@ void Gameplay::OnPaint(wxPaintEvent &event) {
 
 // checks collision in the game
 // Arguments: array of bullets, array of enemies, array of powerups
-void Gameplay::CheckCollision(std::vector<Bullet> &bullets, std::vector<Enemy> &enemy, std::vector<Powerup> &powerups) {
-    // enemy collision with bullet
-    for (int i = 0; i < enemy.size(); i++) {
+void Gameplay::CheckCollision(std::vector<Bullet> &bullets, std::vector<Enemy> &nmes, std::vector<Powerup> &powerups) {
+    // nmes collision with bullet
+    for (int i = 0; i < nmes.size(); i++) {
         for (int j = 0; j < bullets.size(); j++) {
-            if (bullets[j].GetX() + bullets[j].GetWidth() > enemy[i].GetX() - enemy[i].GetRadius() &&
-                bullets[j].GetX() < enemy[i].GetX() + enemy[i].GetRadius()) {
-                if (bullets[j].GetY() < enemy[i].GetY() + enemy[i].GetRadius() &&
-                    bullets[j].GetY() + bullets[j].GetHeight() > enemy[i].GetY() - enemy[i].GetRadius()) {
-                    enemy[i].SetStatus(false);
-                    enemy[i].SetShot(true);
+            if (bullets[j].GetX() + bullets[j].GetWidth() > nmes[i].GetX() - nmes[i].GetRadius() &&
+                bullets[j].GetX() < nmes[i].GetX() + nmes[i].GetRadius()) {
+                if (bullets[j].GetY() < nmes[i].GetY() + nmes[i].GetRadius() &&
+                    bullets[j].GetY() + bullets[j].GetHeight() > nmes[i].GetY() - nmes[i].GetRadius()) {
+                    nmes[i].SetStatus(false);
+                    nmes[i].SetShot(true);
                     bullets.erase(std::remove(bullets.begin(), bullets.end(), bullets[j]));
                 }
             }
         }
     }
-    // enemy collision with player
-    for (int i = 0; i < enemy.size(); i++) {
-        Enemy enemy1 = enemy[i];
+    // nmes collision with player
+    for (int i = 0; i < nmes.size(); i++) {
+        Enemy enemy1 = nmes[i];
         float distanceBetween1 = (enemy1.GetY() + enemy1.GetRadius()) - player.GetY();
         double topDegree = 0.32175;
         double k = distanceBetween1 * tan(topDegree);
         if (k > 5) {
             k = 5;
         }
-        if (player.GetY() < enemy[i].GetY() + enemy[i].GetRadius() - 2 &&
-            player.GetY() + player.GetHeight() > enemy[i].GetY() - enemy[i].GetRadius() + 2) {
-            if (player.GetX() + k > enemy[i].GetX() - enemy[i].GetRadius() &&
-                player.GetX() - k < enemy[i].GetX() + enemy[i].GetRadius()) {
-                enemy[i].SetStatus(false);
+        if (player.GetY() < nmes[i].GetY() + nmes[i].GetRadius() - 2 &&
+            player.GetY() + player.GetHeight() > nmes[i].GetY() - nmes[i].GetRadius() + 2) {
+            if (player.GetX() + k > nmes[i].GetX() - nmes[i].GetRadius() &&
+                player.GetX() - k < nmes[i].GetX() + nmes[i].GetRadius()) {
+                nmes[i].SetStatus(false);
                 UpdateStatusbar(0, -20);
-                enemies.erase(std::remove(enemies.begin(), enemies.end(), enemies[i]));
+                nmes.erase(std::remove(nmes.begin(), nmes.end(), nmes[i]));
             }
         }
     }

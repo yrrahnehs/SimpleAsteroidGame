@@ -6,13 +6,14 @@ Powerup::Powerup() {
 
 Powerup::Powerup(Upgrades upgrades, float posX, float posY) {
     size = 14;
-    int k;
-    if (rand()%2 == 0) {
-        k = -1;
+    int random = rand() % 2;
+    double direction;
+    if (random == 0) {
+        direction = -1;
     } else {
-        k = 1;
+        direction = 1;
     }
-    xVelocity = 0.4*k;
+    xVelocity = 0.4 * direction;
     yVelocity = 0.4;
     SetX(posX);
     SetY(posY);
@@ -75,7 +76,6 @@ void Powerup::CheckBoundary(wxSize size) {
     if (GetY() + GetSize() > size.GetHeight() || GetY() - GetSize() < 0) {
         yVelocity *= -1;
     }
-
 }
 
 void Powerup::DrawPowerup(wxPaintDC &dc) {
@@ -124,17 +124,17 @@ void Powerup::DrawPowerup(wxPaintDC &dc) {
     speed3[5] = wxPoint(GetX() + 11, GetY() - 7);
 
     wxPoint health[12];
-    health[0] = wxPoint(GetX() - 3, GetY() - GetSize()+2);
-    health[1] = wxPoint(GetX() + 3, GetY() - GetSize()+2);
+    health[0] = wxPoint(GetX() - 3, GetY() - GetSize() + 2);
+    health[1] = wxPoint(GetX() + 3, GetY() - GetSize() + 2);
     health[2] = wxPoint(GetX() + 4, GetY() - 4);
-    health[3] = wxPoint(GetX() + GetSize()-2, GetY() - 3);
-    health[4] = wxPoint(GetX() + GetSize()-2, GetY() + 3);
+    health[3] = wxPoint(GetX() + GetSize() - 2, GetY() - 3);
+    health[4] = wxPoint(GetX() + GetSize() - 2, GetY() + 3);
     health[5] = wxPoint(GetX() + 4, GetY() + 4);
-    health[6] = wxPoint(GetX() + 3, GetY() + GetSize()-2);
-    health[7] = wxPoint(GetX() - 3, GetY() + GetSize()-2);
+    health[6] = wxPoint(GetX() + 3, GetY() + GetSize() - 2);
+    health[7] = wxPoint(GetX() - 3, GetY() + GetSize() - 2);
     health[8] = wxPoint(GetX() - 4, GetY() + 4);
-    health[9] = wxPoint(GetX() - GetSize()+2, GetY() + 3);
-    health[10] = wxPoint(GetX() - GetSize()+2, GetY() - 3);
+    health[9] = wxPoint(GetX() - GetSize() + 2, GetY() + 3);
+    health[10] = wxPoint(GetX() - GetSize() + 2, GetY() - 3);
     health[11] = wxPoint(GetX() - 4, GetY() - 4);
 
     wxPoint gunUpgrade[3];
@@ -166,7 +166,7 @@ void Powerup::DrawPowerup(wxPaintDC &dc) {
             break;
         case IncreaseGun:
             dc.SetPen(wxPen(*wxGREEN, 1));
-            dc.SetBrush(wxBrush(wxColour(0,0,0)));
+            dc.SetBrush(wxBrush(wxColour(0, 0, 0)));
             dc.DrawCircle(GetX(), GetY(), 10);
             dc.DrawPolygon(3, gunUpgrade);
             break;

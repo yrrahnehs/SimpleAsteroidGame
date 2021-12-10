@@ -5,14 +5,15 @@
 
 class Enemy {
 private:
-    int radius;
-    float x, y, speed;
+    float x, y, speed, xVel, radius;
     bool isAlive, shot;
+    int enemyType;
+    double rotation, degree;
 
 public:
     Enemy();
 
-    Enemy(int radius, float x, float y, double speed);
+    Enemy(float radius, float x, float y, double speed, int type);
 
     float GetX() const;
 
@@ -30,7 +31,7 @@ public:
 
     void DrawBullets(wxPaintDC &dc);
 
-    void EnemyMovement();
+    void EnemyMovement(wxSize size);
 
     int EnemySpawn(wxSize size, int offset);
 
@@ -48,7 +49,15 @@ public:
 
     void SetStatus(bool newStatus);
 
+    int GetEnemyType();
+
+    double GetRotation();
+
+    void SetRotation(double newRotation);
+
     void SetRateOfFire(int newROF);
+
+    void CheckBoundary(wxSize size);
 
     bool operator==(const Enemy &e) const;
 

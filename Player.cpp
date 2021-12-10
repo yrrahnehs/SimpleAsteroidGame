@@ -6,7 +6,7 @@ Player::Player(int width, int height, float speed, int x, int y) {
     LEFT_WIDTH = width / 2;
     RIGHT_WIDTH = width / 2;
     HEIGHT = height;
-    rateOfFire = 450;
+    rateOfFire = 390;
     upgrade = 0;
     spd = speed;
     xx = x;
