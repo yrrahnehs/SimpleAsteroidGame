@@ -7,19 +7,20 @@ Enemy::Enemy(float radius, float newX, float newY, double speed, int type) {
     SetSpeed(speed);
     SetX(newX);
     SetY(newY);
-    int random = rand()%2;
+    int random = rand() % 2;
     double direction;
     if (random == 0) {
         direction = -1;
     } else {
         direction = 1;
     }
-    xVel = GetSpeed()/3 * direction;
+    xVel = GetSpeed() / 3 * direction;
     isAlive = true;
     shot = false;
     enemyType = type;
     rotation = 0;
     degree = -0.0122173;
+    health = 25;
 }
 
 float Enemy::GetX() const {
@@ -44,6 +45,14 @@ int Enemy::GetRadius() const {
 
 void Enemy::SetRadius(int newRadius) {
     radius = newRadius;
+}
+
+int Enemy::GetHealth() const {
+    return health;
+}
+
+void Enemy::SetHealth(int newHealth) {
+    health = newHealth;
 }
 
 void Enemy::SetSpeed(float newSpeed) {
@@ -91,17 +100,15 @@ void Enemy::EnemyMovement(wxSize size) {
         CheckBoundary(size);
     }
 
-
-
 }
 
 void Enemy::CheckBoundary(wxSize size) {
-    if (GetX() + GetRadius()*2 > size.GetWidth() || GetX() - GetRadius() < 0) {
+    if (GetX() + GetRadius() >= size.GetWidth() || GetX() - GetRadius() < 0) {
         xVel *= -1;
         degree *= -1;
     }
     if (GetY() - GetRadius() > size.GetHeight()) {
-        SetY(-GetRadius()*2);
+        SetY(-GetRadius() * 2);
     }
 }
 
@@ -131,10 +138,22 @@ void Enemy::DrawEnemy(wxPaintDC &dc) {
         dc.SetBrush(wxBrush(wxColour(179, 12, 24)));
         dc.DrawCircle(GetX(), GetY(), GetRadius());
     }
+    if (GetEnemyType() == 2) {
+        dc.SetPen(wxPen(*wxRED, 1));
+        dc.SetBrush(wxBrush(wxColour(179, 12, 24)));
+        dc.DrawRectangle(GetX(), GetY(), GetRadius(), 15);
+    }
 }
 
 int Enemy::EnemySpawn(wxSize size, int offset) {
-    return (rand() % (size.GetWidth() - (offset*2)) + offset);
+    if (GetEnemyType() == 2) {
+        float quarter = (size.GetWidth() / 4);
+        SetRadius((int) quarter);
+        int random = rand() % 4 + 1;
+        return (quarter * random);
+    } else {
+        return (rand() % (size.GetWidth() - (offset * 2)) + offset);
+    }
 }
 
 bool Enemy::operator==(const Enemy &e) const {

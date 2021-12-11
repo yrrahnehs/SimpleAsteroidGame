@@ -12,6 +12,12 @@ Player::Player(int width, int height, float speed, int x, int y) {
     xx = x;
     yy = y;
     health = 100;
+    armor = false;
+    womp = 0.015;
+    glow = 0;
+    increasingRadius = 0;
+    nuke = false;
+    maxed = false;
 }
 
 float Player::GetX() const {
@@ -46,6 +52,14 @@ void Player::SetHealth(int newHealth) {
     health = newHealth;
 }
 
+bool Player::GetArmor() {
+    return armor;
+}
+
+void Player::SetArmor(bool armorStatus) {
+    armor = armorStatus;
+}
+
 int Player::GetUpgrade() {
     return upgrade;
 }
@@ -54,12 +68,40 @@ void Player::SetUpgrade(int newUpgrade) {
     upgrade = newUpgrade;
 }
 
+float Player::GetSpeed() {
+    return spd;
+}
+
 void Player::SetSpeed(float newSpeed) {
     spd = newSpeed;
 }
 
-float Player::GetSpeed() {
-    return spd;
+double Player::GetRateOfFire() {
+    return rateOfFire;
+}
+
+void Player::SetRateOfFire(int newROF) {
+    rateOfFire = newROF;
+}
+
+float Player::GetIncreasingRadius() {
+    return increasingRadius;
+}
+
+bool Player::GetMax() {
+    return maxed;
+}
+
+void Player::SetMax(bool newMax) {
+    maxed = newMax;
+}
+
+bool Player::GetNuke() {
+    return nuke;
+}
+
+void Player::SetNuke(bool newNuke) {
+    nuke = newNuke;
 }
 
 void Player::PlayerMovement(wxSize size) {
@@ -74,6 +116,21 @@ void Player::PlayerMovement(wxSize size) {
     }
     if (wxGetKeyState(WXK_RIGHT)) {
         MoveX(GetX() + spd);
+    }
+
+    if (armor) {
+        glow += womp;
+        if (glow >= 2.0 || glow <= -1) {
+            womp *= -1;
+        }
+    }
+
+    if (nuke) {
+        increasingRadius+= 1;
+        if (increasingRadius >= size.GetHeight()) {
+            increasingRadius = 0;
+            nuke = false;
+        }
     }
 
     CheckPlayerBoundary(size);
@@ -97,6 +154,22 @@ void Player::CheckPlayerBoundary(wxSize size) {
 }
 
 void Player::DrawPlayer(wxPaintDC &dc) {
+    if (nuke) {
+        dc.SetPen(wxPen(wxColour(255, 255, 255), 1));
+        dc.SetBrush(*wxTRANSPARENT_BRUSH);
+        dc.DrawCircle(GetX(), GetY()+GetHeight()/2, increasingRadius);
+    }
+
+    if (armor) {
+        wxPoint forcefield[3];
+        dc.SetPen(wxPen(wxColour(255, 255, 255), 1));
+        dc.SetBrush(wxBrush(wxColour(255, 255, 255)));
+        forcefield[0] = wxPoint(GetX(), GetY() - glow );
+        forcefield[1] = wxPoint(GetX() - GetWidth() / 2 - glow, GetY() + GetHeight() + glow);
+        forcefield[2] = wxPoint(GetX() + GetWidth() / 2 + glow, GetY() + GetHeight() + glow);
+        dc.DrawPolygon(3, forcefield);
+    }
+
     dc.SetPen(wxPen(*wxGREEN, 1));
     dc.SetBrush(wxBrush(wxColour(59, 128, 59)));
     wxPoint triangle[3];
@@ -104,11 +177,12 @@ void Player::DrawPlayer(wxPaintDC &dc) {
     triangle[1] = wxPoint(GetX() - GetWidth() / 2, GetY() + GetHeight());
     triangle[2] = wxPoint(GetX() + GetWidth() / 2, GetY() + GetHeight());
     dc.DrawPolygon(3, triangle);
+
     if (GetUpgrade() == 1) {
         dc.DrawRectangle(GetX() - GetWidth() / 2, GetY() + 2, 1, GetHeight() - 2);
         dc.DrawRectangle(GetX() + GetWidth() / 2, GetY() + 2, 1, GetHeight() - 2);
     }
-    if (GetUpgrade() == 2) {
+    if (GetUpgrade() == 2 || GetUpgrade() == 3) {
         dc.DrawRectangle(GetX() - GetWidth() / 2, GetY() + 2, 1, GetHeight() - 2);
         dc.DrawRectangle(GetX() + GetWidth() / 2, GetY() + 2, 1, GetHeight() - 2);
         dc.DrawLine(GetX() - GetWidth(), GetY() + GetHeight() / 2 + 4, GetX() - GetWidth() / 2, GetY() + GetHeight());
@@ -121,7 +195,7 @@ void Player::DrawPlayer(wxPaintDC &dc) {
 void Player::Fire() {
     if (wxGetKeyState(WXK_SPACE)) {
         ++timeheld;
-        if (timeheld % GetRateOfFire() == 0 || timeheld == 1) {
+        if (timeheld % (int) GetRateOfFire() == 0 || timeheld == 1) {
             Bullet b;
             b = Bullet(GetX() - 1, GetY(), 2);
             b.SetTrigger(true);
@@ -135,7 +209,7 @@ void Player::Fire() {
                 GetBullets().push_back(b1);
                 GetBullets().push_back(b2);
             }
-            if (GetUpgrade() == 2) {
+            if (GetUpgrade() == 2 || GetUpgrade() == 3) {
                 Bullet b1, b2, b3, b4;
                 b1 = Bullet((GetX() - GetWidth() / 2) - 1, GetY() + 1, 2);
                 b2 = Bullet((GetX() + GetWidth() / 2) - 1, GetY() + 1, 2);
@@ -152,11 +226,12 @@ void Player::Fire() {
             }
         }
     }
+
     if (!wxGetKeyState(WXK_SPACE)) {
         if (timeheld != 0) {
             timeheld++;
         }
-        if (timeheld % GetRateOfFire() == 0) {
+        if (timeheld % (int) GetRateOfFire() == 0) {
             timeheld = 0;
         }
     }
@@ -169,7 +244,10 @@ void Player::Fire() {
             GetBullets().erase(std::remove(GetBullets().begin(), GetBullets().end(), GetBullets()[i]));
         }
     }
+}
 
+std::vector<Bullet> &Player::GetBullets() {
+    return bullets;
 }
 
 void Player::DrawBullets(wxPaintDC &dc) {
@@ -178,18 +256,5 @@ void Player::DrawBullets(wxPaintDC &dc) {
             i.DrawBullet(dc);
         }
     }
-}
-
-int Player::GetRateOfFire() {
-    return rateOfFire;
-}
-
-void Player::SetRateOfFire(int newROF) {
-    rateOfFire = newROF;
-}
-
-
-std::vector<Bullet> &Player::GetBullets() {
-    return bullets;
 }
 

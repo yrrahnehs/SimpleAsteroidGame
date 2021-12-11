@@ -22,12 +22,13 @@ private:
     std::vector<Enemy> specialEnemies;
 
     std::vector<Powerup> powerups;
-    int points;
+    int points, i;
     int destroyed, wave, totalDestroyed;
     int nextUpgrade;
     bool isStarted;
     bool isPaused;
-    bool timeToSpawn;
+    bool timeToSpawn1;
+    bool secondPhase;
 
     wxStatusBar *m_stsbar;
 
@@ -43,6 +44,8 @@ public:
     void SetPoints(int newPoints);
 
     void RemoveEnemy(wxSize size, std::vector<Enemy> &nmes);
+
+    bool GetDistance(double x1, double y1, float radius1, double x2, double y2, float radius2);
 
     int GetDestroyed();
 

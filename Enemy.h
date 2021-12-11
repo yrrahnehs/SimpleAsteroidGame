@@ -7,7 +7,7 @@ class Enemy {
 private:
     float x, y, speed, xVel, radius;
     bool isAlive, shot;
-    int enemyType;
+    int enemyType, health;
     double rotation, degree;
 
 public:
@@ -26,6 +26,10 @@ public:
     int GetRadius() const;
 
     void SetRadius(int newRadius);
+
+    int GetHealth() const;
+
+    void SetHealth(int newHealth);
 
     void DrawEnemy(wxPaintDC &dc);
 
