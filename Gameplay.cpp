@@ -490,6 +490,8 @@ void Gameplay::CheckGameOver() {
     if (player.GetHealth() <= 0) {
         timer->Stop();
         isStarted = false;
-        m_stsbar->SetStatusText("Game Over");
+        wxString str;
+        str.Printf(wxT("Game Over              Points: %d"), points);
+        m_stsbar->SetStatusText(str);
     }
 }
