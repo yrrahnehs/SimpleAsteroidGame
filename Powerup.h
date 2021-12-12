@@ -4,7 +4,8 @@
 #include <wx/wx.h>
 
 enum Upgrades {
-    IncreaseGun, IncreaseSpeed, IncreaseHealth, IncreaseFire
+    IncreaseGun, IncreaseSpeed, IncreaseHealth, IncreaseFire,
+    Forcefield, LaserGun
 };
 
 class Powerup {

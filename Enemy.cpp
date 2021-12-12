@@ -2,11 +2,12 @@
 
 Enemy::Enemy() {}
 
-Enemy::Enemy(float radius, float newX, float newY, double speed, int type) {
-    SetRadius(radius);
-    SetSpeed(speed);
-    SetX(newX);
-    SetY(newY);
+Enemy::Enemy(float newRadius, float newX, float newY, float newSpeed, int type) {
+    x = newX;
+    y = newY;
+    speed = newSpeed;
+    radius = newRadius;
+
     int random = rand() % 2;
     double direction;
     if (random == 0) {
@@ -14,6 +15,7 @@ Enemy::Enemy(float radius, float newX, float newY, double speed, int type) {
     } else {
         direction = 1;
     }
+
     xVel = GetSpeed() / 3 * direction;
     isAlive = true;
     shot = false;
@@ -43,7 +45,7 @@ int Enemy::GetRadius() const {
     return radius;
 }
 
-void Enemy::SetRadius(int newRadius) {
+void Enemy::SetRadius(float newRadius) {
     radius = newRadius;
 }
 
@@ -63,11 +65,11 @@ float Enemy::GetSpeed() const {
     return speed;
 }
 
-bool Enemy::GetStatus() {
+bool Enemy::GetStatus() const {
     return isAlive;
 }
 
-bool Enemy::GetShot() {
+bool Enemy::GetShot() const {
     return shot;
 }
 
@@ -79,16 +81,8 @@ void Enemy::SetStatus(bool newStatus) {
     isAlive = newStatus;
 }
 
-int Enemy::GetEnemyType() {
+int Enemy::GetEnemyType() const {
     return enemyType;
-}
-
-double Enemy::GetRotation() {
-    return rotation;
-}
-
-void Enemy::SetRotation(double newRotation) {
-    rotation = newRotation;
 }
 
 void Enemy::EnemyMovement(wxSize size) {
@@ -145,7 +139,7 @@ void Enemy::DrawEnemy(wxPaintDC &dc) {
     }
 }
 
-int Enemy::EnemySpawn(wxSize size, int offset) {
+float Enemy::EnemySpawn(wxSize size, int offset) {
     if (GetEnemyType() == 2) {
         float quarter = (size.GetWidth() / 4);
         SetRadius((int) quarter);

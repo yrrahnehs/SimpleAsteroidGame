@@ -7,15 +7,16 @@
 
 class Player {
 private:
-    float xx, yy;
+    float xx, yy, spd;
     double rateOfFire;
-    int upgrade;
+    int tier;
     int LEFT_WIDTH, RIGHT_WIDTH, HEIGHT;
-    float spd;
+    float rotation, growingSphere, growingLaser;
     std::vector<Bullet> bullets;
     int health;
     int timeheld = 0;
-    bool maxed, armor, nuke;
+    int timeheld1 = 0;
+    bool armor, nuke, laserGun, forceField;
     float womp, glow, increasingRadius;
 
     void CheckPlayerBoundary(wxSize size);
@@ -45,23 +46,27 @@ public:
 
     void SetHealth(int newHealth);
 
-    bool GetArmor();
-
     void SetArmor(bool armorStatus);
-
-    bool GetMax();
-
-    void SetMax(bool newMax);
 
     bool GetNuke();
 
     void SetNuke(bool newNuke);
 
+    bool GetLaserGun();
+
+    void SetLaserGun(bool newLaserGun);
+
+    bool GetForcefield();
+
+    void SetForcefield(bool Forcefield);
+
     double GetRateOfFire();
 
-    void SetRateOfFire(int newROF);
+    void SetRateOfFire(double newROF);
 
     float GetIncreasingRadius();
+
+    float GetGrowingLaser();
 
     void DrawPlayer(wxPaintDC &dc);
 
@@ -73,14 +78,12 @@ public:
 
     void DrawBullets(wxPaintDC &dc);
 
-    int GetUpgrade();
+    int GetTier();
 
-    void SetUpgrade(int newUpgrade);
+    void SetTier(int newTier);
 
 protected:
 };
-
-
 
 
 #endif //SIMPLEASTEROIDGAME_PLAYER_H

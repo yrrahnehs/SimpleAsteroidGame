@@ -1,7 +1,3 @@
-//
-// Created by Harry Shen on 2021-12-09.
-//
-
 #ifndef SIMPLEASTEROIDGAME_GAMEPLAY_H
 #define SIMPLEASTEROIDGAME_GAMEPLAY_H
 
@@ -13,7 +9,6 @@
 class Gameplay : public wxPanel {
 private:
     wxTimer *timer;
-    Upgrades upgrades;
     Player player;
     Enemy enemy;
 
@@ -22,7 +17,7 @@ private:
     std::vector<Enemy> specialEnemies;
 
     std::vector<Powerup> powerups;
-    int points, i;
+    int points, tick0, tick1;
     int destroyed, wave, totalDestroyed;
     int nextUpgrade;
     bool isStarted;
@@ -46,8 +41,6 @@ public:
     void RemoveEnemy(wxSize size, std::vector<Enemy> &nmes);
 
     bool GetDistance(double x1, double y1, float radius1, double x2, double y2, float radius2);
-
-    int GetDestroyed();
 
     void ChooseUpgrade(float newPosX, float newPosY, std::vector<Powerup> &powerups);
 

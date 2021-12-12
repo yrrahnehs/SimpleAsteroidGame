@@ -13,7 +13,7 @@ private:
 public:
     Enemy();
 
-    Enemy(float radius, float x, float y, double speed, int type);
+    Enemy(float newRadius, float x, float y, float newSpeed, int type);
 
     float GetX() const;
 
@@ -25,7 +25,7 @@ public:
 
     int GetRadius() const;
 
-    void SetRadius(int newRadius);
+    void SetRadius(float newRadius);
 
     int GetHealth() const;
 
@@ -33,33 +33,23 @@ public:
 
     void DrawEnemy(wxPaintDC &dc);
 
-    void DrawBullets(wxPaintDC &dc);
-
     void EnemyMovement(wxSize size);
 
-    int EnemySpawn(wxSize size, int offset);
-
-    void Fire();
+    float EnemySpawn(wxSize size, int offset);
 
     void SetSpeed(float newSpeed);
 
     float GetSpeed() const;
 
-    bool GetStatus();
+    bool GetStatus() const;
 
-    bool GetShot();
+    bool GetShot() const;
 
     void SetShot(bool newShot);
 
     void SetStatus(bool newStatus);
 
-    int GetEnemyType();
-
-    double GetRotation();
-
-    void SetRotation(double newRotation);
-
-    void SetRateOfFire(int newROF);
+    int GetEnemyType() const;
 
     void CheckBoundary(wxSize size);
 

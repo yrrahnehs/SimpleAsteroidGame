@@ -11,10 +11,6 @@ Bullet::Bullet(int bulletX, int bulletY, int bulletVelocity) {
     SetHeight(5);
 }
 
-int Bullet::GetVelocity() {
-    return velocity;
-}
-
 void Bullet::SetVelocity(int newVelocity) {
     velocity = newVelocity;
 }
@@ -54,14 +50,6 @@ void Bullet::SetHeight(int newHeight) {
 void Bullet::Move() {
     int newY = GetY() - velocity;
     SetY(newY);
-}
-
-void Bullet::OnKeyDown(wxKeyEvent &event) {
-    int keycode = event.GetKeyCode();
-    if (keycode == WXK_SPACE) {
-        int newY = GetY() - velocity;
-        SetY(newY);
-    }
 }
 
 void Bullet::DrawBullet(wxPaintDC &dc) {

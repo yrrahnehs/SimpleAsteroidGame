@@ -1,7 +1,3 @@
-//
-// Created by Harry Shen on 2021-12-09.
-//
-
 #ifndef SIMPLEASTEROIDGAME_BULLET_H
 #define SIMPLEASTEROIDGAME_BULLET_H
 
@@ -20,8 +16,6 @@ public:
     Bullet();
 
     Bullet(int bulletX, int bulletY, int bulletVelocity);
-
-    int GetVelocity();
 
     void SetVelocity(int newVelocity);
 
@@ -46,8 +40,6 @@ public:
     void SetY(int &newY);
 
     void Move();
-
-    void OnKeyDown(wxKeyEvent &event);
 
     void DrawBullet(wxPaintDC &dc);
 

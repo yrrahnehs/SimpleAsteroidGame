@@ -1,7 +1,3 @@
-//
-// Created by Harry Shen on 2021-11-27.
-//
-
 #include "Gameplay.h"
 #include "Player.h"
 
@@ -15,7 +11,8 @@ Gameplay::Gameplay(wxFrame *parent) :
     player = Player(10, 15, 0.8, size.GetWidth() / 2 - 5, size.GetHeight() * 5 / 6);
     destroyed = 0;
     points = 0;
-    i = 0;
+    tick0 = 0;
+    tick1 = 0;
 
     isStarted = false;
     isPaused = false;
@@ -45,6 +42,7 @@ void Gameplay::Start() {
     timer->Start(5);
 }
 
+// pauses the game by pressing p
 void Gameplay::Pause() {
     if (!isStarted) {
         return;
@@ -60,30 +58,32 @@ void Gameplay::Pause() {
     Refresh();
 }
 
-
+// when a key is pressed
 void Gameplay::OnKeyDown(wxKeyEvent &event) {
     int keycode = event.GetKeyCode();
     if (keycode == 'p' || keycode == 'P') {
         Pause();
         return;
     }
-    if (keycode == 'z' || keycode == 'Z') {
-        player.SetNuke(true);
-        return;
-    }
-    if (keycode == 'd' || keycode == 'D') {
-        player.SetHealth(9999999);
-        player.SetUpgrade(2);
-        player.SetMax(true);
-        player.SetRateOfFire(10);
-        player.SetSpeed(2.4);
-        return;
-    }
+
     if (isPaused) {
         return;
     }
+
+/*     GOD MODE
+    if (keycode == 'd' || keycode == 'D') {
+        player.SetHealth(9999999);
+        player.SetTier(2);
+        player.SetRateOfFire(10);
+        player.SetSpeed(2.4);
+        return;
+    }*/
 }
 
+// chooses an upgrade and spawns at point newPosX, newPosY
+// args: newPosX: x position of the poowerup spawn
+//       newPosY: y position of the poowerup spawn
+//       powerups: upgrade chosen will be added to teh powerups vector
 void Gameplay::ChooseUpgrade(float newPosX, float newPosY, std::vector<Powerup> &powerups) {
     Upgrades upgrades1;
     int randomPowerup = rand() % 99 + 1;
@@ -106,15 +106,26 @@ void Gameplay::ChooseUpgrade(float newPosX, float newPosY, std::vector<Powerup> 
                 upgrades1 = IncreaseFire;
             }
         }
+
         if (nextUpgrade % 14 == 0) {
             upgrades1 = IncreaseGun;
         }
-
         if (nextUpgrade % 6 == 0) {
             upgrades1 = IncreaseHealth;
         }
-    } else {
-        upgrades1 = IncreaseHealth;
+    }
+    // if the game phase is in it's second phase
+    else {
+        int random = rand() % 99;
+        if (random < 5) {
+            upgrades1 = IncreaseGun;
+        } else if (5 <= random && random < 30) {
+            upgrades1 = LaserGun;
+        } else if (30 <= random && random < 60) {
+            upgrades1 = Forcefield;
+        } else {
+            upgrades1 = IncreaseHealth;
+        }
     }
     powerups.emplace_back(upgrades1, newPosX, newPosY);
 }
@@ -132,16 +143,21 @@ void Gameplay::RemoveEnemy(wxSize size, std::vector<Enemy> &nmes) {
             }
             // if the enemy was shot, increase destroyed and point, and erase enemy from array
             if (nmes[i].GetShot()) {
-                if ((int)(player.GetSpeed()*10) == 24 && player.GetRateOfFire() == 10 && player.GetMax()) {
+                // second phase begins when player gets max speed, rate of fire, and tier upgrades
+                if ((int) (player.GetSpeed() * 10) == 24 && player.GetRateOfFire() <= 10 && player.GetTier() == 2) {
                     secondPhase = true;
                 }
+                // if enemy type is circular, set upgrade positions for x and y
                 if (nmes[i].GetEnemyType() != 2) {
                     newPosX = nmes[i].GetX();
                     newPosY = nmes[i].GetY();
-                } else {
+                }
+                // if enemy type is the wall, , set upgrade positions for x and y
+                else {
                     newPosX = nmes[i].GetX() + nmes[i].GetRadius() / 2;
                     newPosY = nmes[i].GetY() + nmes[i].GetRadius() / 2;
                 }
+
                 totalDestroyed++;
 
                 // spawns x-moving enemy
@@ -183,7 +199,7 @@ void Gameplay::RemoveEnemy(wxSize size, std::vector<Enemy> &nmes) {
             }
         }
 
-        // if enemy moves out of bounds
+        // if enemy moves out of bounds, remove from array
         if (nmes[i].GetY() - nmes[i].GetRadius() >= size.GetHeight()) {
             nmes[i].SetStatus(false);
             nmes.erase(std::remove(nmes.begin(), nmes.end(), nmes[i]));
@@ -222,47 +238,55 @@ void Gameplay::OnTimer(wxCommandEvent &event) {
 
     // start spawning WALL enemy when second phase starts
     if (secondPhase) {
-        i++;
-        if (i >= 1500) {
+        tick0++;
+        if (tick0 >= 1500) {
             float quarter = (size.GetWidth() / 4);
             int random = rand() % 4;
             specialEnemies.emplace_back(size.GetWidth() / 4, (quarter * random), -15, enemy.GetSpeed() * 2 / 5, 2);
-            i = 0;
+            tick0 = 0;
         }
     }
 
+    // forcefield duration
+    if (player.GetForcefield()) {
+        tick1++;
+        if (tick1 >= 2000) {
+            player.SetForcefield(false);
+            tick1 = 0;
+        }
+    }
 
-// normal enemy movement
+    // normal enemy movement
     for (auto &enemie: enemies) {
         enemie.EnemyMovement(size);
     }
 
-// special enemy movement
+    // special enemy movement
     for (auto &spEnemie: specialEnemies) {
         spEnemie.EnemyMovement(size);
     }
 
-// enemy removal
+    // enemy removal
     RemoveEnemy(size, enemies);
     RemoveEnemy(size, specialEnemies);
 
-// player movement and shots
+    // player movement and shots
     player.PlayerMovement(size);
     player.Fire();
 
-// powerup movement
+
+    // powerup movement
     for (auto &powerup: powerups) {
         powerup.Move(size);
     }
 
-// checks collision in game
+    // checks collision in game
     CheckCollision(player.GetBullets(), enemies, powerups);
     CheckCollision(player.GetBullets(), specialEnemies, powerups);
 
     CheckGameOver();
 
     wxWindow::Refresh();
-
 }
 
 // Paints objects
@@ -273,6 +297,7 @@ void Gameplay::OnPaint(wxPaintEvent &event) {
         enemie.DrawEnemy(dc);
     }
 
+    // paints special enemies
     for (auto &spEnemie: specialEnemies) {
         spEnemie.DrawEnemy(dc);
     }
@@ -288,6 +313,9 @@ void Gameplay::OnPaint(wxPaintEvent &event) {
 
 }
 
+// gets the distance between two circles, and returns true if they collide
+// args: x1, y1, radius1 for first circle. x2, y2, radius2 for second circle
+// return: false if no collision, true if collision
 bool Gameplay::GetDistance(double x1, double y1, float radius1, double x2, double y2, float radius2) {
     double widthBetweenEachOther = abs(x2 - x1);
     double heightBetweenEachOther = abs(y2 - y1);
@@ -301,11 +329,12 @@ bool Gameplay::GetDistance(double x1, double y1, float radius1, double x2, doubl
 
 
 // checks collision in the game
-// Arguments: array of bullets, array of enemies, array of powerups
+// args: array of bullets, array of enemies, array of powerups
 void Gameplay::CheckCollision(std::vector<Bullet> &bullets, std::vector<Enemy> &nmes, std::vector<Powerup> &powerups) {
-    // nmes collision with bullet
+    // enemy collision with bullet
     for (int i = 0; i < nmes.size(); i++) {
         for (int j = 0; j < bullets.size(); j++) {
+            // if enemy is "WALL"
             if (nmes[i].GetEnemyType() == 2) {
                 if (bullets[j].GetX() + bullets[j].GetWidth() > nmes[i].GetX() &&
                     bullets[j].GetX() < nmes[i].GetX() + nmes[i].GetRadius()) {
@@ -319,20 +348,43 @@ void Gameplay::CheckCollision(std::vector<Bullet> &bullets, std::vector<Enemy> &
                         }
                     }
                 }
-            } else {
+            }
+            // if enemy is "NORMAL" (circular shape)
+            else {
                 if (bullets[j].GetX() + bullets[j].GetWidth() > nmes[i].GetX() - nmes[i].GetRadius() &&
                     bullets[j].GetX() < nmes[i].GetX() + nmes[i].GetRadius()) {
                     if (bullets[j].GetY() < nmes[i].GetY() + nmes[i].GetRadius() &&
                         bullets[j].GetY() + bullets[j].GetHeight() > nmes[i].GetY() - nmes[i].GetRadius()) {
                         nmes[i].SetStatus(false);
                         nmes[i].SetShot(true);
-                        bullets.erase(std::remove(bullets.begin(), bullets.end(), bullets[j]));
+                        if (player.GetRateOfFire() >= 10) {
+                            bullets.erase(std::remove(bullets.begin(), bullets.end(), bullets[j]));
+                        }
                     }
                 }
             }
         }
     }
-    // nuke powerup
+
+    // laser gun powerup, laser collision with enemies
+    if (player.GetLaserGun()) {
+        for (int i = 0; i < nmes.size(); i++) {
+            float laserWidth = ((100 * player.GetGrowingLaser()) / 900) / 2;
+            float laserHeight = player.GetGrowingLaser();
+            if (nmes[i].GetY() >= 10) {
+                if (nmes[i].GetY() + nmes[i].GetRadius() > player.GetY() - laserHeight &&
+                    nmes[i].GetY() - nmes[i].GetRadius() < player.GetY() + laserHeight) {
+                    if (nmes[i].GetX() + nmes[i].GetRadius() > player.GetX() - laserWidth &&
+                        nmes[i].GetX() - nmes[i].GetRadius() < player.GetX() + laserWidth) {
+                        nmes[i].SetStatus(false);
+                        nmes[i].SetShot(true);
+                    }
+                }
+            }
+        }
+    }
+
+    // nuke powerup, nuke collision with enemies
     if (player.GetNuke()) {
         for (int i = 0; i < nmes.size(); i++) {
             if (GetDistance(player.GetX(), player.GetY() + player.GetHeight() / 2, player.GetIncreasingRadius(),
@@ -344,7 +396,8 @@ void Gameplay::CheckCollision(std::vector<Bullet> &bullets, std::vector<Enemy> &
             }
         }
     }
-    // nmes collision with player
+
+    // enemy collision with player
     for (int i = 0; i < nmes.size(); i++) {
         Enemy enemy1 = nmes[i];
         float distanceBetween1 = (enemy1.GetY() + enemy1.GetRadius()) - player.GetY();
@@ -355,33 +408,65 @@ void Gameplay::CheckCollision(std::vector<Bullet> &bullets, std::vector<Enemy> &
         }
         // if enemy type is "WALL"
         if (nmes[i].GetEnemyType() == 2) {
-            if (player.GetY() < nmes[i].GetY() + 15 && player.GetY() + player.GetHeight() > nmes[i].GetY()) {
-                if (player.GetX() + player.GetWidth() / 2 > nmes[i].GetX() &&
-                    player.GetX() - player.GetWidth() / 2 < nmes[i].GetX() + nmes[i].GetRadius()) {
-                    nmes[i].SetStatus(false);
-                    UpdateStatusbar(0, -20);
-                    if (player.GetHealth() <= 100) {
-                        player.SetArmor(false);
+            // if player has a forcefield around them, then take no damage when colliding
+            if (player.GetForcefield()) {
+                if ((player.GetY() + player.GetHeight() / 2) - (player.GetHeight() * 2) < nmes[i].GetY() + 15 &&
+                    (player.GetY() + player.GetHeight() / 2) + (player.GetHeight() * 2) > nmes[i].GetY()) {
+                    if (player.GetX() + (player.GetHeight() * 2) > nmes[i].GetX() &&
+                        player.GetX() - (player.GetHeight() * 2) < nmes[i].GetX() + nmes[i].GetRadius()) {
+                        nmes[i].SetStatus(false);
+                        UpdateStatusbar(1, 0);
+                        if (player.GetHealth() != 0) {
+                            nmes.erase(std::remove(nmes.begin(), nmes.end(), nmes[i]));
+                        }
                     }
+                }
+            }
+            // if no forcefield, subtract health by 20 when collision occurs
+            else {
+                if (player.GetY() < nmes[i].GetY() + 15 && player.GetY() + player.GetHeight() > nmes[i].GetY()) {
+                    if (player.GetX() + player.GetWidth() / 2 > nmes[i].GetX() &&
+                        player.GetX() - player.GetWidth() / 2 < nmes[i].GetX() + nmes[i].GetRadius()) {
+                        nmes[i].SetStatus(false);
+                        UpdateStatusbar(0, -20);
+                        if (player.GetHealth() <= 100) {
+                            player.SetArmor(false);
+                        }
+                        if (player.GetHealth() != 0) {
+                            nmes.erase(std::remove(nmes.begin(), nmes.end(), nmes[i]));
+                        }
+                    }
+                }
+            }
+        }
+
+        // enemy type is circular
+        if (nmes[i].GetEnemyType() != 2) {
+            // if player has a forcefield
+            if (player.GetForcefield()) {
+                if (GetDistance(player.GetX(), (player.GetY() + player.GetHeight() / 2), (player.GetHeight() * 2),
+                                nmes[i].GetX(), nmes[i].GetY(), nmes[i].GetRadius())) {
+                    nmes[i].SetStatus(false);
+                    UpdateStatusbar(1, 0);
                     if (player.GetHealth() != 0) {
                         nmes.erase(std::remove(nmes.begin(), nmes.end(), nmes[i]));
                     }
                 }
             }
-        }
-        // enemy type is ASTEROID
-        if (nmes[i].GetEnemyType() != 2) {
-            if (player.GetY() < nmes[i].GetY() + nmes[i].GetRadius() - 2 &&
-                player.GetY() + player.GetHeight() > nmes[i].GetY() - nmes[i].GetRadius() + 2) {
-                if (player.GetX() + k > nmes[i].GetX() - nmes[i].GetRadius() &&
-                    player.GetX() - k < nmes[i].GetX() + nmes[i].GetRadius()) {
-                    nmes[i].SetStatus(false);
-                    UpdateStatusbar(0, -20);
-                    if (player.GetHealth() <= 100) {
-                        player.SetArmor(false);
-                    }
-                    if (player.GetHealth() != 0) {
-                        nmes.erase(std::remove(nmes.begin(), nmes.end(), nmes[i]));
+            // if no forcefield
+            else {
+                if (player.GetY() < nmes[i].GetY() + nmes[i].GetRadius() - 2 &&
+                    player.GetY() + player.GetHeight() > nmes[i].GetY() - nmes[i].GetRadius() + 2) {
+                    if (player.GetX() + k > nmes[i].GetX() - nmes[i].GetRadius() &&
+                        player.GetX() - k < nmes[i].GetX() + nmes[i].GetRadius()) {
+                        nmes[i].SetStatus(false);
+                        UpdateStatusbar(0, -20);
+                        if (player.GetHealth() <= 100) {
+                            player.SetArmor(false);
+                        }
+                        if (player.GetHealth() != 0) {
+                            nmes.erase(std::remove(nmes.begin(), nmes.end(), nmes[i]));
+                        }
                     }
                 }
             }
@@ -403,19 +488,27 @@ void Gameplay::CheckCollision(std::vector<Bullet> &bullets, std::vector<Enemy> &
             if (player.GetX() + k > powerups[i].GetX() - powerups[i].GetSize() &&
                 player.GetX() - k < powerups[i].GetX() + powerups[i].GetSize()) {
 
+                // if powerups is laserGun
+                if (powerups[i].GetUpgrade() == LaserGun) {
+                    player.SetLaserGun(true);
+                }
+
+                // if powerups is forceField
+                if (powerups[i].GetUpgrade() == Forcefield) {
+                    player.SetForcefield(true);
+                }
+
                 // if powerups is increaseGun
                 if (powerups[i].GetUpgrade() == IncreaseGun) {
-                    if (player.GetUpgrade() == 2 && player.GetMax()) {
+                    if (player.GetTier() == 2) {
                         player.SetNuke(true);
-                    }
-                    if (player.GetUpgrade() != 2) {
-                        player.SetUpgrade(player.GetUpgrade() + 1);
-                    }
-                    if (player.GetUpgrade() == 2 && !player.GetMax()) {
-                        player.SetMax(true);
                         UpdateStatusbar(10, 0);
                     }
+                    if (player.GetTier() != 2) {
+                        player.SetTier(player.GetTier() + 1);
+                    }
                 }
+
                 // if powerup is increaseFire
                 if (powerups[i].GetUpgrade() == IncreaseFire) {
                     if (player.GetRateOfFire() <= 10) {
@@ -425,7 +518,8 @@ void Gameplay::CheckCollision(std::vector<Bullet> &bullets, std::vector<Enemy> &
                         UpdateStatusbar(0, 0);
                     }
                 }
-                    // if powerup is increaseHealth
+
+                // if powerup is increaseHealth
                 else if (powerups[i].GetUpgrade() == IncreaseHealth) {
                     // if max health, add 10 points
                     if (player.GetHealth() >= 100) {
@@ -441,7 +535,8 @@ void Gameplay::CheckCollision(std::vector<Bullet> &bullets, std::vector<Enemy> &
                         UpdateStatusbar(0, 100 - player.GetHealth());
                     }
                 }
-                    // if powerup is increaseSpeed
+
+                // if powerup is increaseSpeed
                 else if (powerups[i].GetUpgrade() == IncreaseSpeed) {
                     if (player.GetSpeed() < 2.4) {
                         player.SetSpeed(player.GetSpeed() + 0.1);
@@ -456,10 +551,14 @@ void Gameplay::CheckCollision(std::vector<Bullet> &bullets, std::vector<Enemy> &
     }
 }
 
+// changes total points
+// arg: new points
 void Gameplay::SetPoints(int newPoints) {
     points = newPoints;
 }
 
+// changes the status bar at the bottom of the screen
+// args: addPoints is the additional point, addHealth is the additional health
 void Gameplay::UpdateStatusbar(int addPoints, int addHealth) {
     int newPoint = points + addPoints;
     int newHealth = player.GetHealth() + addHealth;

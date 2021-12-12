@@ -3,7 +3,6 @@
 Powerup::Powerup() {
 }
 
-
 Powerup::Powerup(Upgrades upgrades, float posX, float posY) {
     size = 14;
     int random = rand() % 2;
@@ -29,6 +28,12 @@ Powerup::Powerup(Upgrades upgrades, float posX, float posY) {
             break;
         case IncreaseGun:
             SetUpgrade(IncreaseGun);
+            break;
+        case Forcefield:
+            SetUpgrade(Forcefield);
+            break;
+        case LaserGun:
+            SetUpgrade(LaserGun);
             break;
     }
 }
@@ -143,6 +148,18 @@ void Powerup::DrawPowerup(wxPaintDC &dc) {
     gunUpgrade[2] = wxPoint(10 * cos(2.61799 - rotation) + GetX(), 10 * sin(2.61799 - rotation) + GetY());
 
 
+    wxPoint forcefieldUpgrade1[6];
+    forcefieldUpgrade1[0] = wxPoint((10/2 * cos(-1.5708)) + GetX(), (10/2 * sin(-1.5708)) + GetY());
+    forcefieldUpgrade1[1] = wxPoint((12 * cos(-0.785398)) + GetX(), (12 * sin(-0.785398)) + GetY());
+    forcefieldUpgrade1[2] = wxPoint((10 * cos(0.261799)) + GetX(), (10 * sin(0.261799)) + GetY());
+    forcefieldUpgrade1[3] = wxPoint((12 * cos(1.5708)) + GetX(), (12 * sin(1.5708)) + GetY());
+    forcefieldUpgrade1[4] = wxPoint((10 * cos(2.87979)) + GetX(), (10 * sin(2.87979)) + GetY());
+    forcefieldUpgrade1[5] = wxPoint((12 * cos(3.92699)) + GetX(), (12 * sin(3.92699)) + GetY());
+    wxPoint forcefieldUpgrade2[3];
+    forcefieldUpgrade2[0] = wxPoint((8 * cos(-0.5236)) + GetX(), (10/2 * sin(-0.5236)) + GetY()+2);
+    forcefieldUpgrade2[1] = wxPoint((4 * cos(1.5708)) + GetX(),(4 * sin(1.5708)) + GetY()+2);
+    forcefieldUpgrade2[2] = wxPoint((8 * cos(3.66519)) + GetX(), (8 * sin(3.66519)) + GetY()+2);
+
     switch (GetUpgrade()) {
         case IncreaseFire:
             dc.SetPen(wxPen(wxColour(252, 153, 10), 1));
@@ -170,6 +187,26 @@ void Powerup::DrawPowerup(wxPaintDC &dc) {
             dc.DrawCircle(GetX(), GetY(), 10);
             dc.DrawPolygon(3, gunUpgrade);
             break;
+        case Forcefield:
+            dc.SetPen(wxPen(*wxWHITE, 1));
+            dc.SetBrush(wxBrush(wxColour(104, 217, 213)));
+            dc.DrawPolygon(6, forcefieldUpgrade1);
+            dc.SetBrush(wxBrush(wxColour(35, 102, 204)));
+            dc.DrawPolygon(3, forcefieldUpgrade2);
+            break;
+        case LaserGun:
+            dc.SetPen(wxPen(wxColour(67, 69, 10), 1));
+            dc.SetBrush(wxBrush(wxColour(242, 245, 66)));
+            dc.DrawCircle(GetX(), GetY()-6, 4);
+            dc.DrawCircle(GetX()+6, GetY()+4, 4);
+            dc.DrawCircle(GetX()-6, GetY()+4, 4);
+            dc.SetPen(wxPen(wxColour(92, 17, 20), 1));
+            dc.SetBrush(wxBrush(wxColour(255,255,255)));
+            dc.DrawCircle((10 * cos(-0.523599 - rotation)) + GetX(), (10 * sin(-0.523599 - rotation)) + GetY(), 2);
+            dc.DrawCircle((10 * cos(1.5708 - rotation)) + GetX(), (10 * sin(1.5708 - rotation)) + GetY(), 2);
+            dc.DrawCircle((10 * cos(-2.61799 - rotation)) + GetX(), (10 * sin(-2.61799 - rotation)) + GetY(), 2);
+            break;
+
     }
 }
 
