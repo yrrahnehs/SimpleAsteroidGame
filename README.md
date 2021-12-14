@@ -4,7 +4,6 @@
 
 ![Screenshot1](https://github.com/yrrahnehs/SimpleAsteroidGame/blob/master/preview/AsteroidGame1.png)
 ![Screenshot2](https://github.com/yrrahnehs/SimpleAsteroidGame/blob/master/preview/AsteroidGame2.png)
+![Screenshot3](https://github.com/yrrahnehs/SimpleAsteroidGame/blob/master/preview/AsteroidGame0.png)
 
-
-> will update more over time.
 
