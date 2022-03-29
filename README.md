@@ -1,5 +1,5 @@
-# SimpleAsteroidGame
-## Simple asteroid game made using C++ and wxWidgets.
+# Simple Space Shooter Game
+## Simple space shooter game made using C++ and wxWidgets.
 ### Arrow keys to move, spacebar to shoot
 
 ![Screenshot1](https://github.com/yrrahnehs/SimpleAsteroidGame/blob/master/preview/AsteroidGame1.png)
